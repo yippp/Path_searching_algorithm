@@ -40,7 +40,7 @@ drawMapEveryTime = true;
 map = zeros(nrows,ncols);
 
 map(~input_map) = 1;   % Mark free cells
-map(input_map)  = 2;   % Mark obstacle cells
+map(map == 0) = 2;  % Mark obstacle cells
 
 % Generate linear indices of start and dest nodes
 start_node = sub2ind(size(map), start_coords(1), start_coords(2));
@@ -96,7 +96,7 @@ while true
     
     if ((current == dest_node) || isinf(min_f))
         break;
-    end;
+    end
     
     % Update input_map
     map(current) = 3;
@@ -111,10 +111,31 @@ while true
     % entries in the map, f, g and parent arrays
     %
     
+    % will not find diagonal neighbor 
+    neighbor = [i-1,j;... 
+                i+1,j;... 
+                i,j+1;... 
+                i,j-1];
+            
+    % delete the neighbor out of range      
+    outRangeCheck = (neighbor(:, 1) < 1) + (neighbor(:, 1) > nrows) +...
+                   (neighbor(:,2)<1) + (neighbor(:,2)>ncols);
+    locate = find(outRangeCheck > 0); 
+    neighbor(locate, :) = [];
     
+    neighborIndex = sub2ind(size(map),neighbor(:, 1),neighbor(:, 2));
     
-    
-    
+    for i = 1:length(neighborIndex) 
+        if (map(neighborIndex(i)) ~= 2) && (map(neighborIndex(i)) ~= 3 && map(neighborIndex(i)) ~= 5)
+            map(neighborIndex(i)) = 4; 
+            
+            if f(neighborIndex(i)) > min_f + 1 
+                f(neighborIndex(i)) = min_f+1; 
+                parent(neighborIndex(i)) = current; 
+                f(neighborIndex(i)) = H(neighborIndex(i)); 
+            end 
+        end 
+    end
     %*********************************************************************
     
     
@@ -141,3 +162,16 @@ else
 end
 
 end
+
+
+% Test code:
+%
+% input_map = [1 1 1 0; ...
+%         0 0 0 0; ...
+%         1 0 1 0; ...
+%         0 0 1 0; ...
+%         0 1 0 0; ...
+%         0 1 0 0];
+% start_coords = [1, 4];
+% dest_coords = [6, 1];
+% AStarGrid (input_map, start_coords, dest_coords)
