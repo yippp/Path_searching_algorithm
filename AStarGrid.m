@@ -112,6 +112,9 @@ while true
     %
     
     % will not find diagonal neighbor 
+    
+    numExpanded = numExpanded + 1;
+    
     neighbor = [i-1,j;... 
                 i+1,j;... 
                 i,j+1;... 
