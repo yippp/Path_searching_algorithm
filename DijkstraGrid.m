@@ -41,7 +41,8 @@ drawMapEveryTime = true;
 map = zeros(nrows,ncols);
 
 map(~input_map) = 1;   % Mark free cells
-map(input_map)  = 2;   % Mark obstacle cells
+map(map == 0) = 2;
+%map(input_map)  = 2;   % Mark obstacle cells
 
 % Generate linear indices of start and dest nodes
 start_node = sub2ind(size(map), start_coords(1), start_coords(2));
@@ -97,11 +98,32 @@ while true
     % Visit each neighbor of the current node and update the map, distances
     % and parent tables appropriately.
     
-    neighborIndex = sub2ind(size(map),neighbor(:,1),neighbor(:,2))
+    % will not find diagonal neighbor 
+    neighbor = [i-1, j;... 
+                i+1, j;... 
+                i, j+1;... 
+                i, j-1];
     
+    % delete the neighbor out of range        
+    outRangeCheck = (neighbor(:, 1) < 1) + (neighbor(:, 1) > nrows) +...
+                    (neighbor(:, 2) < 1) + (neighbor(:, 2) > ncols) ;
+    out = find(outRangeCheck>0); 
+    neighbor(out,:)=[];
     
+    neighborIndex = sub2ind(size(map),neighbor(:,1),neighbor(:,2)); 
     
-    
+    for i = 1:length(neighborIndex)
+        if (map(neighborIndex(i)) ~= 2) && (map(neighborIndex(i)) ~= 3 && map(neighborIndex(i)) ~= 5) 
+            map(neighborIndex(i)) = 4;
+            
+            % renew the shortest parent
+            if distanceFromStart(neighborIndex(i)) > min_dist + 1
+                distanceFromStart(neighborIndex(i)) = min_dist + 1;
+                parent(neighborIndex(i)) = current;
+            end
+        end
+    end
+
     %*********************************************************************
 
 end
@@ -128,4 +150,14 @@ end
 
 end
 
-
+% Test code:
+%
+% input_map = [1 1 1 0; ...
+%         0 0 0 0; ...
+%         1 0 1 0; ...
+%         0 0 1 0; ...
+%         0 1 0 0; ...
+%         0 1 0 0];
+% start_coords = [1, 4];
+% dest_coords = [6, 1];
+% DijkstraGrid (input_map, start_coords, dest_coords)
